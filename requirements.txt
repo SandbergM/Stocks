@@ -1,0 +1,5 @@
+Flask==2.2.2
+python-dotenv==0.20.0
+Flask-Script==2.0.6
+google-cloud-secret-manager==2.0.0
+python-dotenv==0.20.0
