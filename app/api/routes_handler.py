@@ -8,18 +8,23 @@ def run_route( request ):
     try:
 
         if path == 'fi/insider_data':
+            return "Ok", 200
             return insider_data_route( request ), 200
 
         if path == 'fi/blanking_history':
+            return "Ok", 200
             return blanking_history_route( request ), 200
 
         if path == 'ticker/all_tickers':
+            return "Ok", 200
             return get_all_tickers_route( request ), 200
 
         if path == 'ticker/predictions':
+            return "Ok", 200
             return get_ticker_prediction_route( request ), 200
 
         if path == 'ticker/ticker_historical_data':
+            return "Ok", 200
             return get_ticker_historical_data_route( request ), 200
             
     except Exception as e:
