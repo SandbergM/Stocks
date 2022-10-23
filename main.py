@@ -18,7 +18,8 @@ app.config.from_object(config_by_name[os.getenv( "ENV" )])
 @app.route( '/api/<sub_api>/<sub_path>' )
 def get_sub_api( sub_api = "", sub_path = "" ):
     res = run_route( request )
-    return json.dumps(res[0]), res[1]
+    print( res )
+    return "Ok", 200
 
 @app.route( '/cron/<sub_path>' )
 def trigger_cron( sub_path = "" ):
