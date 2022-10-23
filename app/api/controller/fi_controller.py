@@ -2,9 +2,11 @@ from bs4 import BeautifulSoup
 import requests
 from datetime import datetime
 import pandas as pd
+from app.utils.common import log
+
 
 def get_insider_data( **args ):
-
+    
     rows = []
 
     today = datetime.today()
@@ -12,7 +14,6 @@ def get_insider_data( **args ):
     from_transactions_date = args.get( "from_transactions_date" ) or str(today)
     to_transactions_date = args.get( "to_transactions_date" ) or str(today)
     publisher = args.get( "publisher" ) or ""
-
 
     page = args.get( "page" ) or 1
     
@@ -28,6 +29,8 @@ def get_insider_data( **args ):
             f"&Publiceringsdatum.To="                                               \
             f"&button=search"                                                       \
             f"&Page={ page }"
+
+        log( f"Getting insider data page : { page }" )
 
         res = requests.get( url )
         doc = BeautifulSoup( res.text, 'html.parser' )
@@ -65,6 +68,7 @@ def get_blanking_history( **args ):
 
     df['position_in_percent'] = df['position_in_percent'].str.replace('<0,5', '0.5')
     df['position_in_percent'] = df['position_in_percent'].str.replace(',', '.')
+    df['position_in_percent'] = df['position_in_percent'].str.strip()
 
     df['comment'].fillna('', inplace=True)
     df['position_in_percent'].dropna( inplace=True )

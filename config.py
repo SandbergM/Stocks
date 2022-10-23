@@ -9,7 +9,7 @@ class Config:
 class DevelopmentConfig(Config):
     DEBUG = True
     PORT = 5001
-    SERVER_NAME = 'localhost:' + os.getenv( 'FLASK_PORT', "8080" )
+    SERVER_NAME = 'localhost:' + os.getenv( 'FLASK_PORT', f"{PORT}" )
 
 class TestingConfig(Config):
     DEBUG = True

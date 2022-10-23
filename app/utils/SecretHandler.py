@@ -10,7 +10,7 @@ logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO)
 def get_secret( secret ):
 
     try:
-        secrets_project_id = os.getenv( 'SECRETS_PROJECT_ID' )
+        secrets_project_id = '669434566480'
         request = {"name": f'projects/{ secrets_project_id }/secrets/{ secret }/versions/latest'}
         response = client.access_secret_version(request)
         return response.payload.data.decode("UTF-8")
