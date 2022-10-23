@@ -11,8 +11,10 @@ from datetime import timedelta
 from datetime import datetime
 
 from sklearn.preprocessing import MinMaxScaler
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, LSTM
+
+from tensorflow import keras
+from keras.layers import Dense, LSTM
+from keras.models import Sequential, load_model
 
 from google.cloud import bigquery
 
