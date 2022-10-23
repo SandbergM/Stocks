@@ -27,6 +27,6 @@ def trigger_cron( sub_path = "" ):
     run_jobs( request )
     return "Ok", 200
 
-if __name__ == '__main__':
+if __name__ == '__main__' and os.getenv( "ENV" ) == 'dev':
     app.config.from_object(config_by_name[os.getenv( "ENV" )])
     app.run()
