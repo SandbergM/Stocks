@@ -39,5 +39,4 @@ jobs:
         --platform managed \
         --allow-unauthenticated \
         --memory 5G \
-        --timeout=2700s \
-        --set-env-vars "ENV=prod" \
+        --timeout=2700s
