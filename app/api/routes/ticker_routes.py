@@ -10,7 +10,7 @@ def get_all_tickers_route( request ):
 
 def get_ticker_historical_data_route( request ):
     res = get_ticker_data( request.args.get('ticker'), request.args.get('start'), request.args.get('end') )
-    return json.dumps([ dict( el ) for el in res.to_json() ]), 200
+    return json.dumps([ dict( el ) for el in res.to_json() ])
 
 def get_ticker_prediction_route( request ):
-    return get_ticker_prediction( **request.args ), 200
+    return get_ticker_prediction( **request.args )
