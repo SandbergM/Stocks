@@ -29,13 +29,13 @@ jobs:
     - name: Build & Publish
       run: |
         gcloud config set project inspired-fact-321714
-        gcloud builds submit --tag gcr.io/inspired-fact-321714/flask_backend
+        gcloud builds submit --tag gcr.io/inspired-fact-321714/flask-backend
         gcloud config set run/region europe-west6
       
     # Deploy the Docker image to the GKE cluster
     - name: Deploy
       run: |
-        gcloud run deploy flask_backend --image gcr.io/inspired-fact-321714/flask_backend
+        gcloud run deploy flask-backend --image gcr.io/inspired-fact-321714/flask-backend
         --platform managed \
         --allow-unauthenticated \
         --memory 5G \
