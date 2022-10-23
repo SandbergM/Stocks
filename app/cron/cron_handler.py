@@ -15,17 +15,29 @@ def run_jobs( request ):
     trigger = request.path.replace( '/cron/', '' )
 
     if trigger == 'get_yahoo_finance_tickers':
-        run_cron( get_yahoo_finance_tickers )
+        run_cron([
+            get_yahoo_finance_tickers
+        ])
     
     if trigger == "get_insider_trades":
-        run_cron( get_insider_trades )
+        run_cron([
+            get_insider_trades
+        ])
 
     if trigger == "get_blankings":
-        run_cron( get_blankings )
+        run_cron([
+            get_blankings
+        ])
 
 
-def run_cron( func ):
-    if True: #if ready_to_run( func.__name__  ):
-        log( f"Running cron { func.__name__  }" )
-        func()
-        set_as_completed( func.__name__ )
+def run_cron( funcs ):
+
+    for func in funcs:
+        try:
+            if ready_to_run( func.__name__  ):
+                log( f"Running cron { func.__name__  }" )
+                func()
+                set_as_completed( func.__name__ )
+        except Exception as e:
+            set_as_completed( func.__name__ )
+            print( e )
