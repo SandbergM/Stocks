@@ -1,6 +1,5 @@
 
-from app.utils import SecretHandler
-from app.api.service.ticker_service import get_ticker_data
+from app.api.services.ticker_service import get_ticker_data
 
 import pandas as pd
 import numpy as np
@@ -16,44 +15,23 @@ from tensorflow import keras
 from keras.layers import Dense, LSTM
 from keras.models import Sequential, load_model
 
-from google.cloud import bigquery
+from ...__data import DbHandler
 
-client = bigquery.Client()
-
-
-def get_all_tickers():
-    project_id = SecretHandler.get_secret( "PROJECT_ID" )
-
-    query_result = client.query( query = f""" 
-        SELECT 
-            ticker, 
-            company_name 
-        FROM 
-            `{ project_id }.stocks.tickers` 
-        WHERE 
-            lower(country) IN ( 'denmark', 'sweden', 'finland' ) 
-        AND 
-            unix != 0
-        ORDER BY ticker ASC 
-    """ ).result()
-
-    return json.dumps( [ dict( row ) for row in query_result ] )
+def ticker_search( company_name_search = None ):
+    if company_name_search is not None:
+        return DbHandler.select_query( f"""SELECT ticker, unix, company_name, country FROM tickers WHERE company_name LIKE ? ORDER BY ticker ASC LIMIT 25""", ( f"%{company_name_search}%", ) )
+    else:
+        return DbHandler.select_query( f"""SELECT ticker, unix, company_name, country FROM tickers ORDER BY ticker ASC LIMIT 25""" )
     
-def get_ticker_historical_data( **args ):
+def get_ticker_historical_data( ticker, company_name, start, end, interval = '1d' ):
 
     try:    
-
-        ticker = args.get( 'ticker' )
-        start_timestamp = args.get( 'start_timestamp' ) or '2000-01-01'
-        end_timestamp = args.get( 'end_timestamp' ) or '2022-08-27'
-        interval = args.get( 'interval' ) or '1d'
-        company_name = args.get( 'company_name' )
 
         # Full url
         url = f''\
         f'https://query1.finance.yahoo.com/v7/finance/download/{ ticker }'\
-        f'?period1={ int(start_timestamp) }'\
-        f'&period2={ int(end_timestamp) }'\
+        f'?period1={ int(start) }'\
+        f'&period2={ int(end) }'\
         f'&interval={ interval }'\
         f'&events=history'\
         f'&includeAdjustedClose=true'
@@ -70,7 +48,7 @@ def get_ticker_historical_data( **args ):
         res['company_name'] = company_name
 
         # Remove prev saved days ( If found )
-        start_dt            = datetime.datetime.fromtimestamp(int( start_timestamp ))
+        start_dt            = datetime.fromtimestamp(int( start ))
         res['date']         = pd.to_datetime(res['date'], format="%Y-%m-%d")
         res.drop(res[(res['date'] <= start_dt )].index, inplace=True)
         
@@ -81,16 +59,13 @@ def get_ticker_historical_data( **args ):
         return res
 
     except Exception as e :
+        print(e)
         return pd.DataFrame()
 
-def get_ticker_prediction( **args ):
+def get_ticker_prediction( ticker, prediction_days = 7, start = '2000-01-01', end = '2022-08-27', epochs = 30 ):
 
-    prediction_days = int( args.get( 'prediction_days' ) or 7 )
-    start = args.get('start') or '2000-01-01'
-    end = args.get('end') or '2022-08-27'
-    epochs = int( args.get('epochs') or 30 )
     
-    ticker_data = get_ticker_data( args.get( 'ticker' ), start, end )
+    ticker_data = get_ticker_data( ticker, start, end )
     ticker_data['date'] = ticker_data['date'].dt.date
 
     max_ticker_data = ticker_data['date'].max()
@@ -156,7 +131,7 @@ def get_ticker_prediction( **args ):
 
 
         res.append({
-            'ticker' : args.get('ticker'),
+            'ticker' : ticker,
             'date' : max_ticker_data.strftime('%Y-%m-%d'),
             'close' : float( pred[0] ),
             'predicted' : True

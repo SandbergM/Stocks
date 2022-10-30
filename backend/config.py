@@ -9,7 +9,6 @@ class Config:
 class DevelopmentConfig(Config):
     DEBUG = True
     PORT = "8080"
-    SERVER_NAME = '0.0.0.0:' + PORT
 
 class TestingConfig(Config):
     DEBUG = True
