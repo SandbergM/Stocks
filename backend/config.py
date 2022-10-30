@@ -8,7 +8,7 @@ class Config:
 
 class DevelopmentConfig(Config):
     DEBUG = True
-    PORT = "8080"
+    PORT = "5001"
 
 class TestingConfig(Config):
     DEBUG = True
@@ -17,7 +17,7 @@ class TestingConfig(Config):
 
 class ProductionConfig(Config):
     DEBUG = False
-    PORT = "8080"
+    PORT = "5001"
 
 config_by_name = dict(
     dev=DevelopmentConfig,

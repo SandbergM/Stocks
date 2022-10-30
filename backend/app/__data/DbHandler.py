@@ -10,6 +10,7 @@ def multiple_insert( insert_query, data ):
         with sqlite3.connect( ___STOCKS_DB_PATH ) as connection:
             cursor = connection.cursor()
             cursor.executemany(insert_query, data)
+
     except Exception as e:
         print(e)
         return False
@@ -43,7 +44,9 @@ def update_query( sql_update_query, data ):
             cursor = connection.cursor()
             cursor.execute(sql_update_query, data)
             connection.commit()
-    except:
+
+    except Exception as e:
+        print(e)
         return False
 
     return True
@@ -55,7 +58,9 @@ def delete_query( sql_delete_query, params ):
             cursor = connection.cursor()
             cursor.execute(sql_delete_query, params)
             connection.commit()
-    except:
+
+    except Exception as e:
+        print(e)
         return False
 
     return True
