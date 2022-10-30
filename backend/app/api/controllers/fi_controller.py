@@ -1,21 +1,21 @@
+
 from bs4 import BeautifulSoup
 import requests
 from datetime import datetime
 import pandas as pd
-from app.utils.common import log
+from app.utils.CommonUtils import log
 
 
-def get_insider_data( **args ):
+def get_insider_data( from_transactions_date, to_transactions_date = None, publisher = None ):
     
     rows = []
 
     today = datetime.today()
 
-    from_transactions_date = args.get( "from_transactions_date" ) or str(today)
-    to_transactions_date = args.get( "to_transactions_date" ) or str(today)
-    publisher = args.get( "publisher" ) or ""
+    to_transactions_date = to_transactions_date or str(today)
+    publisher = publisher or ""
 
-    page = args.get( "page" ) or 1
+    page = 1
     
     while page:
         url = f""                                                                   \
@@ -46,7 +46,10 @@ def get_insider_data( **args ):
     
     return rows
 
-def get_blanking_history( **args ):
+def get_blanking_history( from_date = None, to_date = None ):
+
+    from_date = from_date if from_date is not None else str(datetime.today())
+    to_date = to_date if to_date is not None else str(datetime.today())
 
     url = "https://fi.se/sv/vara-register/blankningsregistret/GetHistFile/"
     df = pd.read_excel( url )
@@ -62,22 +65,15 @@ def get_blanking_history( **args ):
 
     df = df.iloc[5:]
 
-    df.rename(columns={
-        prev : new for prev, new in zip( df.columns, columns.keys() )
-    }, inplace=True)
+    df.rename(columns={prev : new for prev, new in zip( df.columns, columns.keys())}, inplace=True)
 
-    df['position_in_percent'] = df['position_in_percent'].str.replace('<0,5', '0.5')
-    df['position_in_percent'] = df['position_in_percent'].str.replace(',', '.')
-    df['position_in_percent'] = df['position_in_percent'].str.strip()
-
+    df['position_in_percent'] = df['position_in_percent'].apply(lambda x : str(x).replace('<0,5', '0.5'))
+    df['position_in_percent'] = df['position_in_percent'].apply(lambda x : str(x).replace(',', '.'))
     df['comment'].fillna('', inplace=True)
-    df['position_in_percent'].dropna( inplace=True )
 
     for key, val in columns.items():
         df[key] = df[key].astype( val )
 
-    if args.get('return_type') == "json":
-        return df.to_json(orient='records')
+    df = df.loc[(df['position_date'] >= from_date)&(df['position_date'] <= to_date)]
 
-    else:
-        return df
+    return df.to_dict("records")
