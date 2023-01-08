@@ -7,7 +7,7 @@ load_dotenv()
 
 #  Routes
 from app.api.routes.api_routes import api_routes
-from app.__cron_jobs.cron_routes import cron_routes
+from app.cron_jobs.cron_routes import cron_routes
 
 #Flask imports
 from flask import Flask
@@ -19,7 +19,7 @@ app.register_blueprint(cron_routes)
 app.register_blueprint(api_routes)
 
 #  Load config based on ENV variable
-app.config.from_object(config_by_name[os.getenv( "ENV" )])
+app.config.from_object(config_by_name[os.getenv( "ENV", 'DEV' )])
 
 if __name__ == '__main__':
     app.run()

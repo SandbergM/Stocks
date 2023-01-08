@@ -1,7 +1,7 @@
 
 from app.api.controllers.fi_controller import get_blanking_history
 
-from ....__data import DbHandler
+from app.data import DbHandler
 
 def get_blankings():
 
@@ -11,4 +11,5 @@ def get_blankings():
     if from_date is not None:
         DbHandler.delete_query( "DELETE FROM fi_short_positions WHERE position_date = ?", (from_date,))
     res = [tuple( el.values() ) for el in res] 
+
     DbHandler.multiple_insert( "INSERT INTO fi_short_positions VALUES(?,?,?,?,?,?)", res )

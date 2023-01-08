@@ -1,0 +1,75 @@
+
+@import './CompanySearch.css';
+
+* {
+  box-sizing: border-box;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+:root {
+  --background-color              : #18191A;
+  --card-color                    : #242526;
+  --hover-color                   : #3A3B3C;
+  --primary-text                  : #E4E6EB;
+  --secondary-text                : #B0B3B8;
+}
+
+.App {
+  min-height: 100vh !important;
+  background-color: var(--background-color);
+}
+
+/* width */
+::-webkit-scrollbar {
+  width: 20px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  box-shadow: inset 0 0 5px var( --hover-color ); 
+  border-radius: 10px;
+}
+ 
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: var( --secondary-text ); 
+  border-radius: 10px;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: var( --primary-text  ); 
+}
+
+.settingsSelect{
+  border-radius           : 10px;
+  margin                  : 20px 0px 20px 0px!important;
+  padding                 : 10px!important;
+  background-color        : var( --card-color );
+  border-color            : var( --card-color );
+  color                   : var( --secondary-text );
+  outline-style           : none;
+  box-shadow              : none;
+  font-weight             : bold;
+}
+
+.settingsButton{
+  width: 100%!important;
+  margin: 5px 5px 5px 5px!important;
+  color: var(--primary-text);
+  background-color: var(--card-color);
+  border: var(--background-color);
+}
+
+.settingsButton:focus{
+  color: var(--primary-text );
+  background-color: var(--hover-color );
+  border: var(--background-color);
+}
+
+.settingsButton:hover{
+  color: var(--primary-text );
+  background-color: var(--hover-color );
+  border: var(--background-color);
+}

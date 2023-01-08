@@ -1,0 +1,59 @@
+
+
+#company-search-input{
+    border-width            : 4px;
+    border-radius           : 10px;
+    padding                 : 10px!important;
+    background-color        : var( --card-color );
+    border-color            : var( --card-color );
+    color                   : var( --secondary-text );
+    outline-style           : none;
+    box-shadow              : none;
+    font-weight             : bold;
+}
+
+#company-search-input:focus{
+    border-width            : 4px;
+    padding                 : 10px!important;
+    background-color        : var( --card-color );
+    border-color            : var( --hover-color );
+    color                   : var( --primary-text );
+    font-weight             : bold;
+}
+
+#company-search-input:hover{
+    border-width            : 4px;
+    padding                 : 10px!important;
+    background-color        : var( --card-color );
+    border-color            : var( --hover-color );
+    color                   : var( --primary-text );
+    font-weight             : bold;
+}
+
+.autoContainer{
+    padding                 : 10px!important;
+    background-color        : var( --card-color );
+    border-color            : var( --card-color );
+    color                   : var( --primary-text );
+    font-weight             : bold;
+    border-radius           : 10px;
+    border-width            : 4px;
+    max-height              : 71.5vh!important;
+    overflow                : auto;
+    position:absolute;
+    display: block;
+    z-index: 999!important;
+}
+
+.ticker-info{
+    font-weight: 100;
+    font-size: 15px;
+}
+
+.option{
+    cursor: pointer;
+}
+
+#companySearchHeader{
+    height: 10vh!important;
+}

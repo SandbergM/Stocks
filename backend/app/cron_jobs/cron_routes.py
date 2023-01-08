@@ -2,14 +2,15 @@
 import time
 
 # Jobs
-from app.__cron_jobs.jobs.yahoo_finance_tickers.main import get_yahoo_finance_tickers
-from app.__cron_jobs.jobs.fi_insider_trading.main import get_insider_trades
-from app.__cron_jobs.jobs.fi_blanking_history.main import get_blankings
+from app.cron_jobs.jobs.yahoo_finance_tickers.main import get_yahoo_finance_tickers
+from app.cron_jobs.jobs.fi_insider_trading.main import get_insider_trades
+from app.cron_jobs.jobs.fi_blanking_history.main import get_blankings
 
-from ..utils import CommonUtils
-from ..__data import DbHandler
+from app.utils import CommonUtils
+from app.data import DbHandler
 
 from flask import Blueprint
+
 import os
 
 cron_routes = Blueprint('cron_routes', __name__ )

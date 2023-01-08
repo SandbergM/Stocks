@@ -1,8 +1,6 @@
-
-
 import sqlite3
 
-___STOCKS_DB_PATH = "./app/__data/stocks.db"
+___STOCKS_DB_PATH = "./app/data/stocks.db"
 
 def multiple_insert( insert_query, data ):
 
@@ -10,6 +8,7 @@ def multiple_insert( insert_query, data ):
         with sqlite3.connect( ___STOCKS_DB_PATH ) as connection:
             cursor = connection.cursor()
             cursor.executemany(insert_query, data)
+            
     except Exception as e:
         print(e)
         return False

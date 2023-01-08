@@ -1,145 +1,95 @@
-
-from app.api.services.ticker_service import get_ticker_data
-
 import pandas as pd
 import numpy as np
-import datetime
-import json
-import math
-from datetime import timedelta
-from datetime import datetime
+from datetime import datetime 
+import time
 
-from sklearn.preprocessing import MinMaxScaler
-
-from tensorflow import keras
-from keras.layers import Dense, LSTM
-from keras.models import Sequential, load_model
-
-from ...__data import DbHandler
+from app.data import DbHandler
+from app.utils import CommonUtils
+from app.cron_jobs.jobs.yahoo_finance_tickers.main import get_ticker_historical_data, update_tickers_table, save_data
 
 def ticker_search( company_name_search = None ):
     if company_name_search is not None:
-        return DbHandler.select_query( f"""SELECT ticker, unix, company_name, country FROM tickers WHERE company_name LIKE ? ORDER BY ticker ASC LIMIT 25""", ( f"%{company_name_search}%", ) )
+        custom_query = f"""SELECT ticker, unix, company_name, country FROM tickers WHERE company_name LIKE ? OR ticker LIKE ? ORDER BY ticker ASC LIMIT 25"""
+        return DbHandler.select_query(custom_query, (f"%{company_name_search}%", f"%{company_name_search}%",) )
     else:
         return DbHandler.select_query( f"""SELECT ticker, unix, company_name, country FROM tickers ORDER BY ticker ASC LIMIT 25""" )
-    
-def get_ticker_historical_data( ticker, company_name, start, end, interval = '1d' ):
 
-    try:    
+def ticker_history(ticker, b_rate, b_diviation, start, end):
 
-        # Full url
-        url = f''\
-        f'https://query1.finance.yahoo.com/v7/finance/download/{ ticker }'\
-        f'?period1={ int(start) }'\
-        f'&period2={ int(end) }'\
-        f'&interval={ interval }'\
-        f'&events=history'\
-        f'&includeAdjustedClose=true'
+    data = DbHandler.select_query(f""" SELECT * FROM yahoo_finance_1d_historical_data WHERE ticker = ? """,(ticker,))
 
-        # Get CSV
-        res                 = pd.read_csv( url )
+    def get_sma(prices, rate):
+        return prices.rolling(rate).mean()
 
-        # Fix col names
-        res.columns         = [ col.replace(' ', '_').replace( '*', '' ).lower().strip() for col in res.columns ]
+    def get_bollinger_bands(prices, rate, diviation):
+        sma = get_sma(prices, rate)
+        std = prices.rolling(rate).std()
+        bollinger_up = sma + std * diviation
+        bollinger_down = sma - std * diviation
+
+        bollinger_up = bollinger_up.replace(np.nan, None)
+        bollinger_down = bollinger_down.replace(np.nan, None)
+
+        return bollinger_up.values.tolist(), bollinger_down.values.tolist()
+
+    closing_prices = pd.DataFrame(data=[ el.get('close') for el in data])
+    bollinger_up, bollinger_down = get_bollinger_bands(closing_prices, b_rate, b_diviation)
+
+    wma_10 = [CommonUtils.get_weighted_moving_average([el.get('close') for el in data[idx-10:idx]]) for idx in range(len(data))]
+    wma_20 = [CommonUtils.get_weighted_moving_average([el.get('close') for el in data[idx-20:idx]]) for idx in range(len(data))]
+    wma_50 = [CommonUtils.get_weighted_moving_average([el.get('close') for el in data[idx-50:idx]]) for idx in range(len(data))]
+    wma_100 = [CommonUtils.get_weighted_moving_average([el.get('close') for el in data[idx-100:idx]]) for idx in range(len(data))]
+
+    norm_lists = {
+        'open_norm' : [],
+        'high_norm' : [],
+        'low_norm' : [],
+        'close_norm' : [],
+        'adj_close_norm' : [],
+        'volume_norm' : [],
+    }
+
+    if type(start) == str:
+        start = datetime.strptime(start, '%Y-%m-%d')
+
+    for key in norm_lists:
+        norm_max = max([el.get(key.replace('_norm', '')) for el in data if datetime.strptime(el.get('date'), '%Y-%m-%d') >= start])
+        norm_lists[key] = [int((el.get(key.replace('_norm', '')) / norm_max) * 100) for el in data]
+
+    return [{
+        **el, 
+        'b_up' : bollinger_up[idx][0], 
+        'b_down' : bollinger_down[idx][0], 
+        'open_norm' : norm_lists.get('open_norm')[idx],
+        'high_norm' : norm_lists.get('high_norm')[idx],
+        'low_norm' : norm_lists.get('low_norm')[idx],
+        'close_norm' : norm_lists.get('close_norm')[idx],
+        'adj_close_norm' : norm_lists.get('adj_close_norm')[idx],
+        'volume_norm' : norm_lists.get('volume_norm')[idx],
+        "wma_10" : wma_10[idx],
+        "wma_20" : wma_20[idx],
+        "wma_50" : wma_50[idx],
+        "wma_100" : wma_100[idx],
+    } for idx, el in enumerate(data)]
+
+def add_ticker_to_db( ticker, company_name, country ):
+
+    if len(DbHandler.select_query(""" SELECT * FROM tickers WHERE  ticker = ? """, ( ticker, ))) == 0:
+
+        DbHandler.multiple_insert(""" INSERT INTO tickers VALUES(?, ?, ?, ?)""", [(ticker, 0, company_name, country, )])
+
+        res = get_ticker_historical_data(
+            ticker = ticker,
+            company_name = company_name,
+            interval = '1d',
+            start = 0,
+            end = int(time.time())
+        )
         
-        # Add ticker and company_name as columns
-        res                 = res.reindex([ 'ticker', 'company_name', *res.columns.tolist() ], axis = 1)
-        res['ticker']       = ticker
-        res['company_name'] = company_name
+        if len( res ):
+            if save_data( res ):
+                update_tickers_table( ticker, res['date'].max().timestamp() )
 
-        # Remove prev saved days ( If found )
-        start_dt            = datetime.fromtimestamp(int( start ))
-        res['date']         = pd.to_datetime(res['date'], format="%Y-%m-%d")
-        res.drop(res[(res['date'] <= start_dt )].index, inplace=True)
-        
-        # Some 'volume's come as float for some reason
-        res.dropna( inplace=True )
-        res['volume']       = res['volume'].astype(np.int64)
-        
-        return res
-
-    except Exception as e :
-        print(e)
-        return pd.DataFrame()
-
-def get_ticker_prediction( ticker, prediction_days = 7, start = '2000-01-01', end = '2022-08-27', epochs = 30 ):
-
-    
-    ticker_data = get_ticker_data( ticker, start, end )
-    ticker_data['date'] = ticker_data['date'].dt.date
-
-    max_ticker_data = ticker_data['date'].max()
-
-    data = ticker_data.filter(['close'])
-    dataset = data.values
-
-    traning_data_len = math.ceil( len(dataset) * 0.8 )
-
-    scaler = MinMaxScaler(feature_range=(0, 1))
-    scaled_data = scaler.fit_transform(dataset)
-
-    train_data = scaled_data[0:traning_data_len, : ]
-
-    x_train = []
-    y_train = []
-
-    for i in range( prediction_days, len( train_data ) ):
-        x_train.append(train_data[i-prediction_days:i, 0])
-        y_train.append( train_data[i, 0] )
-
-    x_train, y_train = np.array( x_train ), np.array( y_train )
-
-    x_train = np.reshape( x_train, ( x_train.shape[0], x_train.shape[1], 1 ))
-
-    model = Sequential()
-    model.add(LSTM(50, return_sequences=True, input_shape = ( x_train.shape[1], 1)))
-    model.add(LSTM(50, return_sequences=False ))
-    model.add(Dense(25))
-    model.add(Dense(1))
-
-    model.compile( optimizer = 'adam', loss = 'mean_squared_error' )
-
-    model.fit( x_train, y_train, batch_size = 50, epochs = epochs )
-
-    test_data = scaled_data[traning_data_len - prediction_days: , : ]
-    
-    x_test = []
-
-    for i in range( prediction_days, len(test_data) ):
-        x_test.append( test_data[i-prediction_days:i, 0] )
-
-    x_test = np.array( x_test )
-    x_test = np.reshape(x_test, (x_test.shape[0], x_test.shape[1], 1))
-    
-    predictions = model.predict( x_test )
-    predictions = scaler.inverse_transform( predictions )
-
-    ticker_data['date'] = ticker_data['date'].astype( str )
-    res = [ dict( row ) for idx, row in ticker_data[['ticker', 'date', 'close']].iterrows() ]
-
-    for pred in predictions:
-
-        max_ticker_data += timedelta(days=1)
-
-        weekend_days = {
-            6 : 2,
-            7 : 1
-        }
-
-        if max_ticker_data.isoweekday() in weekend_days.keys():
-            max_ticker_data += timedelta(days= weekend_days.get( max_ticker_data.isoweekday() ) )
-
-
-        res.append({
-            'ticker' : ticker,
-            'date' : max_ticker_data.strftime('%Y-%m-%d'),
-            'close' : float( pred[0] ),
-            'predicted' : True
-        })
-
-    def customSort( k ):
-        return k['date']
-
-    res.sort( key=customSort, reverse=False )
-
-    return json.dumps( res )
+        return "Ok1"
+    else:
+        return "Ok2"

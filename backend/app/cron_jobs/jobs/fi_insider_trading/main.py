@@ -5,7 +5,7 @@ from datetime import date
 from app.api.controllers.fi_controller import get_insider_data
 from app.utils.CommonUtils import log
 
-from ....__data import DbHandler
+from app.data import DbHandler
 
 def get_insider_trades():
     log("Running get_insider_trades")
