@@ -13,7 +13,7 @@ def get_tickers_data():
     log( "Getting tickers" )
     return DbHandler.select_query(f"SELECT * FROM tickers")
 
-def save_data( df ):
+def save_data( df, interval_table ):
 
     data = []
 
@@ -31,7 +31,7 @@ def save_data( df ):
 
         data.append(( _ticker, _company_name, _date, _open, _high, _low, _close, _adj_close, _volume ))
 
-    return DbHandler.multiple_insert( "INSERT INTO yahoo_finance_1d_historical_data values (?,?,?,?,?,?,?,?,?)", data )
+    return DbHandler.multiple_insert( f"INSERT INTO yahoo_finance_{interval_table}_historical_data values (?,?,?,?,?,?,?,?,?)", data )
 
 def update_tickers_table( ticker, unix ):
     return DbHandler.update_query("UPDATE tickers SET unix = ? WHERE ticker = ?", ( unix, ticker ))
@@ -44,19 +44,22 @@ def get_yahoo_finance_tickers():
         
         log( f"Getting data for { ticker.get( 'company_name' ) }" )
 
-        res = get_ticker_historical_data(
-            ticker = ticker.get( 'ticker' ),
-            company_name = ticker.get( 'company_name' ),
-            interval = '1d',
-            start = ticker.get( 'unix' ),
-            end = int(time.time())
-        )
+        intervals = ["1d", "1wk"]
 
-        if len( res ):
-            if save_data( res ):
-                update_tickers_table( ticker.get( 'ticker' ), res['date'].max().timestamp() )
+        for interval in intervals:
+            res = get_ticker_historical_data(
+                ticker = ticker.get( 'ticker' ),
+                company_name = ticker.get( 'company_name' ),
+                interval = interval,
+                start = ticker.get( 'unix' ),
+                end = int(time.time())
+            )
 
-def get_ticker_historical_data( ticker, company_name, start, end, interval = '1d' ):
+            if len( res ):
+                if save_data( res, interval ):
+                    update_tickers_table( ticker.get( 'ticker' ), res['date'].max().timestamp() )
+
+def get_ticker_historical_data( ticker, company_name, start, end, interval ):
 
     try:    
 
@@ -68,7 +71,7 @@ def get_ticker_historical_data( ticker, company_name, start, end, interval = '1d
         f'&interval={ interval }'\
         f'&events=history'\
         f'&includeAdjustedClose=true'
-        input(url)
+
         # Get CSV
         res                 = pd.read_csv( url )
 

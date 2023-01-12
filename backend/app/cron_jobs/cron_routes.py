@@ -15,7 +15,7 @@ import os
 
 cron_routes = Blueprint('cron_routes', __name__ )
 
-@cron_routes.route('/cron/yahoo_finance_1d')
+@cron_routes.route('/cron/yahoo_finance')
 def yahoo_finance_1d():
     run_cron( get_yahoo_finance_tickers )
     return "Ok", 200

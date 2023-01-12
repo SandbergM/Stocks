@@ -56,7 +56,7 @@ function CompanySearch(args) {
   return (
     <Row className="justify-content-center">
       <p className="text-warning"> {currentGain} </p>
-      <Col xs={6}>
+      <Col xs={12}>
         <Form className="mt-4" >
           <Form.Control
             type="text"
@@ -68,7 +68,7 @@ function CompanySearch(args) {
             value={search}
           />
           {display && options.length && (
-            <Col xs={6} className="autoContainer mt-2" ref={wrapperRef}>
+            <Col xs={2} className="autoContainer mt-2" ref={wrapperRef}>
               {options.map((v, i) => {
                 return (
                   <div className="option mb-3" key={i} onClick={() => selectOption(v.company_name, v.ticker)}>

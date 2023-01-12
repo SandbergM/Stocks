@@ -1,13 +1,11 @@
-from datetime import datetime
-from dateutil.relativedelta import relativedelta
-
+import re
 from flask import Blueprint, request
 
 api_routes = Blueprint( 'api_routes', __name__ )
 
 from app.api.controllers.ticker_controller import ticker_search
 from app.api.controllers.ticker_controller import add_ticker_to_db
-from app.api.services.ticker_service import get_ticker_data
+from app.api.controllers.ticker_controller import ticker_history
 
 @api_routes.route('/ticker/ticker_search', methods=["GET"])
 def ticker_search_route():
@@ -24,29 +22,14 @@ def add_ticker_to_db_route():
 @api_routes.route('/ticker/historical_data', methods=["GET"])
 def get_ticker_historical_data_route():
 
-    today_date = datetime.now()
-    last_monday = today_date - relativedelta(days=-today_date.weekday(), weeks=1)
-
-    dates = {
-        '1w' : last_monday - relativedelta(weeks=1),
-        '2w' : last_monday - relativedelta(weeks=2),
-        '3w' : last_monday - relativedelta(weeks=3),
-        '1m' : last_monday - relativedelta(months=1),
-        '2m' : last_monday - relativedelta(months=2),
-        '3m' : last_monday - relativedelta(months=3),
-        '6m' : last_monday - relativedelta(months=6),
-        '1y' : last_monday - relativedelta(years=1),
-        '2y' : last_monday - relativedelta(years=2),
-        '3y' : last_monday - relativedelta(years=3),
-        '5y' : last_monday - relativedelta(years=5),
-    }
-
+    ticker = request.args.get('ticker')
+    
     b_rate = int(request.args.get('b_rate', 10))
     b_diviation = float(request.args.get('b_diviation', 2))
-    ticker = request.args.get('ticker')
+    interval_type = request.args.get('interval_type', 'year')
+    interval_length = request.args.get('interval_length', 1)
 
-    if request.args.get('timeframe') in dates:
-        start = dates.get(request.args.get('timeframe'))
-        return [dict( el ) for el in get_ticker_data(ticker, b_rate, b_diviation, start) if datetime.strptime(el.get('date'), '%Y-%m-%d') >= start]
+    wmas = [ re.sub('[^0-9]+', '', v) for k, v in dict(request.args.items()).items() if k[:3] == "wma"]
+    rsis = [ re.sub('[^0-9]+', '', v) for k, v in dict(request.args.items()).items() if k[:3] == "rsi"]
 
-    return [dict( el ) for el in get_ticker_data(ticker,b_rate, b_diviation)]
+    return [dict( el ) for el in ticker_history(ticker, b_rate, b_diviation, wmas, rsis, interval_type, interval_length)]
