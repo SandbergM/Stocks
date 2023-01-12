@@ -1,10 +1,10 @@
 import pandas as pd
-import numpy as np
 from datetime import datetime 
 import time
 
 from app.data import DbHandler
 from app.utils import CommonUtils
+
 from app.cron_jobs.jobs.yahoo_finance_tickers.main import get_ticker_historical_data, update_tickers_table, save_data
 
 def ticker_search( company_name_search = None ):
@@ -20,7 +20,7 @@ def ticker_history(ticker, b_rate, b_diviation, wmas, rsis, interval_type, inter
 
     end_date = CommonUtils.generate_date(interval_type, interval_length)
     table = '1d' if (datetime.now() - end_date).days <= (370 * 3) else '1wk'
-    print("table : ", table, end_date)
+
     data = DbHandler.select_query(f"""SELECT * FROM yahoo_finance_{table}_historical_data WHERE ticker = ?""",(ticker,))
 
     closing_prices = pd.DataFrame(data=[ el.get('close') for el in data])
@@ -32,12 +32,6 @@ def ticker_history(ticker, b_rate, b_diviation, wmas, rsis, interval_type, inter
         for el in wmas
     }
 
-    # Relative Strength Index's
-    rsi_lists = {
-        f'RSI {el}' : [CommonUtils.get_rsi([el.get('close') for el in data[idx-int(el):idx]]) for idx in range(len(data))]
-        for el in rsis
-    }
-    
     # Relative Strength Index's
     rsi_lists = {
         f'RSI {el}' : [CommonUtils.get_rsi([el.get('close') for el in data[idx-int(el):idx]]) for idx in range(len(data))]

@@ -10,7 +10,7 @@ export default function TickerContextProvider(props) {
   const [currentCompanyName, setCurrentCompanyName] = useState("")
   const [updateChart, setUpdateChart] = useState(false)
 
-  const [settings, setSettings] = useState({
+  const [params, setParams] = useState({
     "interval_type": "year",
     "interval_length": "1",
     "b_rate": "20",
@@ -29,10 +29,10 @@ export default function TickerContextProvider(props) {
   const getStockData = async () => {
     
     let url = `/ticker/historical_data?ticker=${currentTicker}`
-    for (const [key, value] of Object.entries(settings)) {
+    for (const [key, value] of Object.entries(params)) {
       url = url + `&${key}=${value}`
     }
-    
+
     let data = {
       "candleData": [],
     }
@@ -64,7 +64,7 @@ export default function TickerContextProvider(props) {
 
   useEffect(() => {
     getStockData()
-  }, [currentTicker])
+  }, [currentTicker, params])
 
   const values = {
     options,
@@ -75,7 +75,9 @@ export default function TickerContextProvider(props) {
     setCurrentCompanyName,
     getStockData,
     stockData,
-    updateChart
+    updateChart,
+    params,
+    setParams,
   };
 
   return (

@@ -77,7 +77,7 @@ function StockChart({ chartId }) {
       var options = {
         series: series,
         chart: {
-          height: 700,
+          height: 500,
           type: 'line',
         },
         stroke: {

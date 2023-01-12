@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 import requests
 from datetime import datetime
 import pandas as pd
-from app.utils.CommonUtils import log
+from app.utils import CommonUtils
 
 
 def get_insider_data( from_transactions_date, to_transactions_date = None, publisher = None ):
@@ -30,7 +30,7 @@ def get_insider_data( from_transactions_date, to_transactions_date = None, publi
             f"&button=search"                                                       \
             f"&Page={ page }"
 
-        log( f"Getting insider data page : { page }" )
+        CommonUtils.log( f"Getting insider data page : { page }" )
 
         res = requests.get( url )
         doc = BeautifulSoup( res.text, 'html.parser' )
